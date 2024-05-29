@@ -2,16 +2,16 @@
 
 // CONSTANTS
 const RECIPE_URLS = [
-    'https://adarsh249.github.io/Lab8-Starter/recipes/1_50-thanksgiving-side-dishes.json',
-    'https://adarsh249.github.io/Lab8-Starter/recipes/2_roasting-turkey-breast-with-stuffing.json',
-    'https://adarsh249.github.io/Lab8-Starter/recipes/3_moms-cornbread-stuffing.json',
-    'https://adarsh249.github.io/Lab8-Starter/recipes/4_50-indulgent-thanksgiving-side-dishes-for-any-holiday-gathering.json',
-    'https://adarsh249.github.io/Lab8-Starter/recipes/5_healthy-thanksgiving-recipe-crockpot-turkey-breast.json',
-    'https://adarsh249.github.io/Lab8-Starter/recipes/6_one-pot-thanksgiving-dinner.json',
+  "https://adarsh249.github.io/Lab8-Starter/recipes/1_50-thanksgiving-side-dishes.json",
+  "https://adarsh249.github.io/Lab8-Starter/recipes/2_roasting-turkey-breast-with-stuffing.json",
+  "https://adarsh249.github.io/Lab8-Starter/recipes/3_moms-cornbread-stuffing.json",
+  "https://adarsh249.github.io/Lab8-Starter/recipes/4_50-indulgent-thanksgiving-side-dishes-for-any-holiday-gathering.json",
+  "https://adarsh249.github.io/Lab8-Starter/recipes/5_healthy-thanksgiving-recipe-crockpot-turkey-breast.json",
+  "https://adarsh249.github.io/Lab8-Starter/recipes/6_one-pot-thanksgiving-dinner.json",
 ];
 
 // Run the init() function when the page has loaded
-window.addEventListener('DOMContentLoaded', init);
+window.addEventListener("DOMContentLoaded", init);
 
 // Starts the program, all function calls trace back here
 async function init() {
@@ -45,6 +45,23 @@ function initializeServiceWorker() {
   // We first must register our ServiceWorker here before any of the code in
   // sw.js is executed.
   // B1. TODO - Check if 'serviceWorker' is supported in the current browser
+  console.log("serviceWorker" in navigator);
+
+  // B1
+  if ("serviceWorker" in navigator) {
+    // B2
+    window.addEventListener("load", async function () {
+      // B3
+      try {
+        let registration = await navigator.serviceWorker.register("./sw.js");
+        if (registration.active) {
+          console.log("successfully registered");
+        }
+      } catch (err) {
+        console.error("registration failed", err);
+      }
+    });
+  }
   // B2. TODO - Listen for the 'load' event on the window object.
   // Steps B3-B6 will be *inside* the event listener's function created in B2
   // B3. TODO - Register './sw.js' as a service worker (The MDN article
@@ -68,15 +85,50 @@ async function getRecipes() {
   // EXPOSE - START (All expose numbers start with A)
   // A1. TODO - Check local storage to see if there are any recipes.
   //            If there are recipes, return them.
+  let recipes = localStorage.getItem("recipes");
+  if (recipes) {
+    recipes = JSON.parse(recipes);
+    console.log("recipies local storage", recipes);
+    return recipes;
+  }
   /**************************/
   // The rest of this method will be concerned with requesting the recipes
   // from the network
   // A2. TODO - Create an empty array to hold the recipes that you will fetch
+  let fetched_recipies = [];
+
   // A3. TODO - Return a new Promise. If you are unfamiliar with promises, MDN
   //            has a great article on them. A promise takes one parameter - A
   //            function (we call these callback functions). That function will
   //            take two parameters - resolve, and reject. These are functions
   //            you can call to either resolve the Promise or Reject it.
+  return new Promise(async (resolve, reject) => {
+    console.log("fetching recipes");
+
+    // A4
+    for (let i = 0; i < RECIPE_URLS.length; i++) {
+      // A5
+      try {
+        // A6
+        let response = await fetch(RECIPE_URLS[i]);
+
+        // A7
+        let response_json = await response.json();
+
+        // A8
+        fetched_recipies.push(response_json);
+
+        // A9
+        if (fetched_recipies.length === RECIPE_URLS.length) {
+          saveRecipesToStorage(fetched_recipies);
+          resolve(fetched_recipies);
+        }
+      } catch (err) {
+        console.log(err);
+        reject(err);
+      }
+    }
+  });
   /**************************/
   // A4-A11 will all be *inside* the callback function we passed to the Promise
   // we're returning
@@ -108,7 +160,7 @@ async function getRecipes() {
  * @param {Array<Object>} recipes An array of recipes
  */
 function saveRecipesToStorage(recipes) {
-  localStorage.setItem('recipes', JSON.stringify(recipes));
+  localStorage.setItem("recipes", JSON.stringify(recipes));
 }
 
 /**
@@ -120,9 +172,9 @@ function saveRecipesToStorage(recipes) {
  */
 function addRecipesToDocument(recipes) {
   if (!recipes) return;
-  let main = document.querySelector('main');
+  let main = document.querySelector("main");
   recipes.forEach((recipe) => {
-    let recipeCard = document.createElement('recipe-card');
+    let recipeCard = document.createElement("recipe-card");
     recipeCard.data = recipe;
     main.append(recipeCard);
   });
